@@ -7,6 +7,6 @@
     "build": "redocly build-docs public/openapi.yaml --output public/index.html --config redocly.yaml --template template.hbs"
   },
   "devDependencies": {
-    "@redocly/cli": "2.62.2"
+    "@redocly/cli": "2.72.1"
   }
 }
