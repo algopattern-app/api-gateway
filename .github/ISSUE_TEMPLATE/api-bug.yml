@@ -1,0 +1,16 @@
+name: API or docs bug
+description: Something in the public API or its docs is wrong.
+body:
+  - type: markdown
+    attributes:
+      value: "**Issues are public. Never paste a token** (anything starting with `ap_pat_`)."
+  - type: input
+    attributes:
+      label: Endpoint
+      placeholder: GET /v1/me/stats
+  - type: textarea
+    attributes:
+      label: What happened, and what you expected
+      description: Include the status code and the error `code` if there was one.
+    validations:
+      required: true

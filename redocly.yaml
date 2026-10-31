@@ -1,0 +1,26 @@
+extends:
+  - recommended
+
+rules:
+  # The API isn't open source; its terms are linked from info.termsOfService.
+  info-license: off
+
+openapi:
+  expandResponses: '200'
+  jsonSamplesExpandLevel: 3
+  theme:
+    typography:
+      fontFamily: '"Nunito", system-ui, -apple-system, sans-serif'
+      headings:
+        fontFamily: '"Nunito", system-ui, -apple-system, sans-serif'
+      code:
+        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
+    colors:
+      primary:
+        main: '#394E9A'
+      text:
+        primary: '#1F2A4D'
+    sidebar:
+      backgroundColor: '#F4F5FB'
+    rightPanel:
+      backgroundColor: '#263266'

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Help with my account
+    url: mailto:algopattern.dev@gmail.com
+    about: Account, streak or subscription questions go to email, not public issues.
