@@ -16,6 +16,19 @@ Files in `public/` take precedence over the proxy, so `/v1` is the reference pag
 This repo holds no API logic and no secrets. Token checks, rate limiting and every response
 body live in the backend: the `api` edge function and the `api.v1_*` SQL functions.
 
+## Previewing locally
+
+```bash
+python3 scripts/preview.py
+```
+
+Then open http://localhost:8765. The script needs only Python 3 and serves `public/` the way
+Vercel does: `/v1` serves `v1.html`, and the headers from `vercel.json` apply, including the
+Content-Security-Policy. Edits show on reload. API paths such as `/v1/me` answer with a JSON
+404 locally, since in production Vercel proxies them to the API.
+
+Once the repo is connected to Vercel, every pull request also gets a preview deployment.
+
 ## Changing the spec
 
 The spec describes a published contract. Within `/v1`, changes are additive only (new fields
