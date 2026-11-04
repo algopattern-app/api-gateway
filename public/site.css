@@ -1,0 +1,90 @@
+:root {
+  --ap-dusk: #394E9A;
+  --ap-slate: #6E72E6;
+  --ap-sky: #83C9F8;
+  --ap-gold: #E9D985;
+  --ap-cream: #EDEEC9;
+  --ap-ink: #1F2A4D;
+  --ap-muted: #5B6585;
+  --ap-line: #DCE1EE;
+  --ap-tint: #F4F5FB;
+  --ap-font: "Nunito", system-ui, -apple-system, sans-serif;
+  --ap-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+/* Jumps to a heading land below the sticky header, not under it. */
+html { scroll-padding-top: 72px; }
+body { margin: 0; background: #fff; color: var(--ap-ink); font-family: var(--ap-font); }
+
+.site-header {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 0 24px; height: 60px;
+  background: var(--ap-dusk); color: #fff;
+}
+.site-header .brand { display: flex; align-items: center; gap: 10px; color: #fff; text-decoration: none; font-weight: 700; font-size: 18px; }
+.site-header .brand .brand-api { color: var(--ap-gold); }
+.site-header nav { display: flex; gap: 4px; }
+.site-header nav a { color: #DCE4FF; text-decoration: none; font-weight: 600; font-size: 15px; padding: 8px 12px; border-radius: 8px; }
+.site-header nav a:hover { background: rgba(255,255,255,.1); color: #fff; }
+.site-header nav a.active { background: rgba(255,255,255,.16); color: #fff; }
+
+/* Guide page: a sticky table of contents beside the text */
+.docs { display: grid; grid-template-columns: 220px minmax(0, 1fr); }
+.toc {
+  position: sticky; top: 60px; align-self: start;
+  height: calc(100vh - 60px); overflow-y: auto;
+  padding: 24px 12px 24px;
+  background: var(--ap-dusk);
+  font-size: 15px;
+  scrollbar-width: none;
+}
+.toc:hover { scrollbar-width: thin; }
+.toc ul { list-style: none; margin: 0 0 8px; padding: 0; }
+.toc h5 {
+  margin: 16px 0 4px; padding: 0 10px;
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+  color: #A9B6E6;
+}
+/* Same link colors as the header's nav, which shares the background. */
+.toc a { display: block; padding: 4px 10px; border-radius: 7px; color: #DCE4FF; text-decoration: none; }
+.toc a:hover { background: rgba(255,255,255,.1); color: #fff; }
+.toc a.active { background: rgba(255,255,255,.16); color: #fff; font-weight: 700; }
+
+.guide { max-width: 1400px; padding: 40px 56px 96px; line-height: 1.65; font-size: 16.5px; }
+.guide section { scroll-margin-top: 76px; }
+.guide h3.group {
+  margin: 56px 0 0; font-size: 12px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--ap-muted);
+}
+.guide h3.group + section h2 { border-top: 0; margin-top: 4px; padding-top: 0; }
+.guide .date { color: var(--ap-muted); font-size: 14px; margin: -4px 0 8px; }
+.guide h1 { font-size: 36px; line-height: 1.2; margin: 0 0 16px; }
+.guide .lede { font-size: 19px; color: var(--ap-muted); margin: 0 0 24px; }
+.guide .beta { display: inline-block; background: var(--ap-cream); border: 1px solid var(--ap-gold); border-radius: 8px; padding: 10px 14px; font-size: 15px; margin: 0 0 16px; }
+.guide h2 { font-size: 24px; margin: 48px 0 8px; padding-top: 8px; border-top: 1px solid var(--ap-line); }
+.guide a { color: var(--ap-dusk); }
+.guide code { font-family: var(--ap-mono); font-size: 0.88em; background: var(--ap-tint); border: 1px solid var(--ap-line); border-radius: 5px; padding: 1px 5px; }
+.guide pre { background: var(--ap-ink); color: #E8ECFA; border-radius: 10px; padding: 16px 18px; overflow-x: auto; font-size: 14px; line-height: 1.55; }
+.guide pre code { background: none; border: 0; padding: 0; color: inherit; }
+.guide table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 12px 0; }
+.guide th, .guide td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--ap-line); vertical-align: top; }
+.guide th { font-weight: 700; color: var(--ap-muted); font-size: 13px; text-transform: uppercase; letter-spacing: .04em; }
+.guide .cta { display: inline-block; background: var(--ap-dusk); color: #fff; text-decoration: none; font-weight: 700; padding: 10px 16px; border-radius: 10px; }
+
+/* Narrow screens: no table of contents, just the text. */
+@media (max-width: 860px) {
+  .docs { display: block; }
+  .toc { display: none; }
+  .guide table { display: block; overflow-x: auto; }
+  .guide { padding: 32px 16px 72px; }
+}
+
+@media (max-width: 600px) {
+  .site-header { padding: 0 16px; }
+  .site-header nav a:last-child { display: none; }
+  .site-header .brand-name { display: none; }
+  .site-header nav a { padding: 8px 10px; }
+  .guide h1 { font-size: 28px; }
+}
