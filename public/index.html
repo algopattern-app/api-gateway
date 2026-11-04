@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>AlgoPattern API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description"
+    content="Read-only API for your own AlgoPattern streak, XP and activity, for personal integrations such as Home Assistant." />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/site.css" />
+</head>
+
+<body>
+  <header class="site-header">
+    <a class="brand" href="/"><img src="/favicon.svg" alt="" width="28" height="28" /> <span
+        class="brand-name">AlgoPattern</span> <span class="brand-api">API</span></a>
+    <nav>
+      <a href="/" class="active">Documentation</a>
+      <a href="/v1">Endpoints</a>
+      <a href="https://algopattern.app">AlgoPattern app</a>
+    </nav>
+  </header>
+
+  <div class="docs">
+    <aside class="toc">
+      <nav aria-label="On this page">
+        <ul>
+          <li><a href="#overview">Overview</a></li>
+          <li><a href="#quick-start">Quick start</a></li>
+        </ul>
+        <h5>Authentication</h5>
+        <ul>
+          <li><a href="#tokens">Personal access tokens</a></li>
+          <li><a href="#using-a-token">Using a token</a></li>
+        </ul>
+        <h5>Usage</h5>
+        <ul>
+          <li><a href="#endpoints">Endpoints</a></li>
+          <li><a href="#response-format">Response format</a></li>
+          <li><a href="#dates">Days and time zones</a></li>
+          <li><a href="#polling">Polling</a></li>
+          <li><a href="#rate-limiting">Rate limiting</a></li>
+          <li><a href="#errors">Errors</a></li>
+          <li><a href="#versioning">Versioning</a></li>
+        </ul>
+        <h5>Legal</h5>
+        <ul>
+          <li><a href="#permitted-use">Permitted use</a></li>
+          <li><a href="#terms">Terms of Service</a></li>
+        </ul>
+        <h5>Help</h5>
+        <ul>
+          <li><a href="#support">Support</a></li>
+        </ul>
+        <h5>Changelog</h5>
+        <ul>
+          <li><a href="#v1.0.0">v1.0.0</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main class="guide">
+      <section id="overview">
+        <h1>AlgoPattern API</h1>
+        <p class="beta"><strong>Beta.</strong> The API is rolling out gradually; the token screen appears in the app as
+          it reaches your account.</p>
+        <p class="lede">Read-only access to your own progress, for personal integrations such as dashboards, scripts and
+          widgets.</p>
+        <a class="cta" href="/v1">Browse the endpoints →</a>
+      </section>
+
+      <section id="quick-start">
+        <h2>Quick start</h2>
+        <ol>
+          <li>In the app, open <strong>Settings → Account → API tokens</strong> and create a token. Copy it right away:
+            it is shown once.</li>
+          <li>Call the API with it:</li>
+        </ol>
+        <pre><code>curl https://api.algopattern.app/v1/me/streak \
+  -H "Authorization: Bearer ap_pat_…"</code></pre>
+      </section>
+
+      <h3 class="group">Authentication</h3>
+
+      <section id="tokens">
+        <h2>Personal access tokens</h2>
+        <p>The API uses personal access tokens: long, random strings starting with <code>ap_pat_</code>, created in the
+          app.</p>
+        <ul>
+          <li>Tokens need a linked account (email, Apple or Google). Guest accounts can't create them.</li>
+          <li>You can have up to 5 tokens. Name each one after where it's used, so you know which to revoke.</li>
+          <li>A token can only read your progress. It can't change anything, and it can't sign in to the app.</li>
+          <li>Treat a token like a password. If one leaks, revoke it in the app; it stops working on its next request.
+          </li>
+        </ul>
+      </section>
+
+      <section id="using-a-token">
+        <h2>Using a token</h2>
+        <p>Send the token in the <code>Authorization</code> header of every request:</p>
+        <pre><code>Authorization: Bearer ap_pat_…</code></pre>
+        <p>Check a token with <code>GET /v1/me</code>, which says whose it is and what it's called. It's a good first
+          call for an integration's setup screen.</p>
+      </section>
+
+      <h3 class="group">Usage</h3>
+
+      <section id="endpoints">
+        <h2>Endpoints</h2>
+        <p>Each endpoint answers one question, so you only ask for what you show:</p>
+        <table>
+          <tr>
+            <th>Endpoint</th>
+            <th>Answers</th>
+          </tr>
+          <tr>
+            <td><code>GET /v1/me/streak</code></td>
+            <td>Is my streak alive, and have I practised today?</td>
+          </tr>
+          <tr>
+            <td><code>GET /v1/me/xp</code></td>
+            <td>How much XP do I have, and where do I rank?</td>
+          </tr>
+          <tr>
+            <td><code>GET /v1/me/activity</code></td>
+            <td>What did I do on each day?</td>
+          </tr>
+          <tr>
+            <td><code>GET /v1/me</code></td>
+            <td>Whose token is this?</td>
+          </tr>
+        </table>
+        <p>Fields, examples and code samples are in the <a href="/v1">endpoint reference</a>.</p>
+      </section>
+
+      <section id="response-format">
+        <h2>Response format</h2>
+        <p>Every response is a JSON object with one of two shapes. A success has the resource under a key named after
+          it, next to <code>as_of</code>, the time the response was computed:</p>
+        <pre><code>{
+  "streak": { "current": 42, "active_today": true, … },
+  "as_of": "2026-10-30T19:05:12Z"
+}</code></pre>
+        <p>An error has <code>error</code> instead (see <a href="#errors">Errors</a>), so check for <code>error</code>
+          first, then read the resource.</p>
+        <p>Fields with no value are <code>null</code>, never left out.</p>
+      </section>
+
+      <section id="dates">
+        <h2>Days and time zones</h2>
+        <p>Streaks and activity count your <strong>local</strong> days, in the time zone of the device you last used the
+          app on. Responses say which one in <code>timezone</code>, and <code>today</code> is your current local date.
+        </p>
+        <p>The weekly leaderboard is different: its week starts Monday 00:00 UTC for everyone, so <code>this_week</code>
+          in <code>/v1/me/xp</code> can split near midnight differently from your local days.</p>
+        <p>Dates are <code>YYYY-MM-DD</code>; timestamps are ISO 8601 in UTC.</p>
+      </section>
+
+      <section id="polling">
+        <h2>Polling</h2>
+        <p>Your progress changes a few times a day at most. <strong>Poll every 5 minutes at most</strong>, and only the
+          endpoints you display: an integration showing your streak and XP makes two requests per poll.</p>
+        <p>Past days of activity never change. Fetch them once and keep them, then poll only a short recent range.</p>
+        <p>Responses carry <code>Cache-Control: private, max-age=…</code>: 60 seconds for streak and XP, 5 minutes for
+          activity. A browser or caching HTTP client may reuse a response for that long; the API itself always answers
+          with live data.</p>
+      </section>
+
+      <section id="rate-limiting">
+        <h2>Rate limiting</h2>
+        <p>Each token may make <strong>60 requests a minute</strong>. Every response says where you stand:</p>
+        <table>
+          <tr>
+            <th>Header</th>
+            <th>Meaning</th>
+          </tr>
+          <tr>
+            <td><code>X-RateLimit-Limit</code></td>
+            <td>Requests allowed per minute</td>
+          </tr>
+          <tr>
+            <td><code>X-RateLimit-Remaining</code></td>
+            <td>Requests left this minute</td>
+          </tr>
+          <tr>
+            <td><code>X-RateLimit-Reset</code></td>
+            <td>Unix time when the minute resets</td>
+          </tr>
+        </table>
+        <p>Over the limit, you get <code>429</code> with a <code>Retry-After</code> header.</p>
+      </section>
+
+      <section id="errors">
+        <h2>Errors</h2>
+        <p>Errors have an HTTP status and a JSON body with a stable <code>code</code>:</p>
+        <pre><code>{
+  "error": {
+    "code": "invalid_token",
+    "message": "The token is missing, invalid or revoked."
+  }
+}</code></pre>
+        <table>
+          <tr>
+            <th>Status</th>
+            <th>Code</th>
+            <th>What to do</th>
+          </tr>
+          <tr>
+            <td>400</td>
+            <td><code>invalid_request</code></td>
+            <td>Fix the query parameters</td>
+          </tr>
+          <tr>
+            <td>401</td>
+            <td><code>invalid_token</code></td>
+            <td>Check the token, or create a new one</td>
+          </tr>
+          <tr>
+            <td>404</td>
+            <td><code>not_found</code></td>
+            <td>Check the path</td>
+          </tr>
+          <tr>
+            <td>429</td>
+            <td><code>rate_limited</code></td>
+            <td>Wait for <code>Retry-After</code> seconds</td>
+          </tr>
+          <tr>
+            <td>500</td>
+            <td><code>internal_error</code></td>
+            <td>Retry with backoff</td>
+          </tr>
+        </table>
+        <p>Rely on <code>code</code>, not <code>message</code>. New codes may be added; handle unknown ones by HTTP
+          status.</p>
+      </section>
+
+      <section id="versioning">
+        <h2>Versioning</h2>
+        <p>Within <code>/v1</code>, changes only add fields and endpoints; ignore fields you don't recognise. A breaking
+          change means <code>/v2</code>, with at least 90 days when both work, announced in the <a
+            href="#v1.0.0">changelog</a>.</p>
+      </section>
+
+      <h3 class="group">Legal</h3>
+
+      <section id="permitted-use">
+        <h2>Permitted use</h2>
+        <p>Personal, non-commercial integrations with your own account are welcome. You may not:</p>
+        <ul>
+          <li>build an app or website that replaces or replicates AlgoPattern</li>
+          <li>share your token or use someone else's</li>
+          <li>work around the rate limit</li>
+          <li>use the app's internal endpoints instead of this API</li>
+        </ul>
+      </section>
+
+      <section id="terms">
+        <h2>Terms of Service</h2>
+        <p>Using the API means agreeing to the AlgoPattern <a href="https://algopattern.app/terms">Terms of Service</a>,
+          which this page doesn't replace.</p>
+      </section>
+
+      <h3 class="group">Help</h3>
+
+      <section id="support">
+        <h2>Support</h2>
+        <ul>
+          <li>Bugs in the API or these docs, and feature requests: <a
+              href="https://github.com/algopattern-app/api-gateway/issues">GitHub issues</a>. Issues are public: never
+            paste a token.</li>
+          <li>Anything about your account: <a href="mailto:algopattern.dev@gmail.com">algopattern.dev@gmail.com</a>.
+          </li>
+        </ul>
+      </section>
+
+      <h3 class="group">Changelog</h3>
+
+      <section id="v1.0.0">
+        <h2>v1.0.0</h2>
+        <p class="date">November 2026</p>
+        <p>Initial release of the AlgoPattern API.</p>
+      </section>
+    </main>
+  </div>
+
+  <script src="/docs.js" defer></script>
+</body>
+
+</html>
