@@ -1,118 +1,14 @@
 openapi: 3.0.3
 info:
-  title: AlgoPattern Public API
-  version: 1.0.0-beta
+  title: AlgoPattern API Endpoints
+  version: 1.0.0
   description: |
-    Read-only access to your own AlgoPattern progress, for personal integrations such as
-    Home Assistant, dashboards, scripts and widgets.
+    Endpoint reference. For tokens, rate limits, errors, and permitted use, see the 
+    [documentation](https://api.algopattern.app/).
 
-    **Status: beta.** The API is rolling out gradually; the token screen appears in the app
-    as it reaches your account.
-
-    # Overview
-
-    The API answers one question: *how am I doing?* It returns your streak, XP, leaderboard
-    ranks and recent activity, computed live with the same logic the app uses.
-
-    It is deliberately small. It does not provide, and will not provide:
-
-    - question, answer or explanation content
-    - other users' data
-    - any way to complete sessions, or change XP, streaks or settings
-
-    Building alternative clients for AlgoPattern is not permitted. See
-    [Permitted use](#section/Permitted-use).
-
-    # Quick start
-
-    1. In the app, open **Settings → Account → API tokens** and create a token. Copy it right
-       away: it is shown once.
-    2. Call the API with it:
-
-    ```bash
-    curl https://api.algopattern.app/v1/me/stats \
-      -H "Authorization: Bearer ap_pat_…"
-    ```
-
-    # Authentication
-
-    Every request needs a personal access token in the `Authorization` header:
-    `Authorization: Bearer ap_pat_…`.
-
-    - Tokens need a linked account (email, Apple or Google). Guest accounts can't create them,
-      because a guest account is lost with its device.
-    - You can have up to 5 tokens at a time. Name each one after where it's used.
-    - Treat a token like a password. Anyone who has it can read your stats.
-    - If a token leaks, revoke it in the app. It stops working on its next request.
-    - A token only reads. It can't change anything on your account, and it can't sign in to
-      the app.
-
-    # Rate limits and polling
-
-    Each token may make **60 requests a minute**. Every response says where you stand:
-
-    | Header | Meaning |
-    |---|---|
-    | `X-RateLimit-Limit` | Requests allowed per minute |
-    | `X-RateLimit-Remaining` | Requests left this minute |
-    | `X-RateLimit-Reset` | Unix time when the minute resets |
-
-    Over the limit, you get `429` with a `Retry-After` header.
-
-    Your stats change a few times a day at most. **Poll no more often than every 5 minutes**;
-    an integration that updates a dashboard every 15–30 minutes loses nothing.
-
-    # Errors
-
-    Errors have an HTTP status and a JSON body:
-
-    ```json
-    { "error": { "code": "invalid_token", "message": "The token is missing, invalid or revoked." } }
-    ```
-
-    | Status | `code` | What to do |
-    |---|---|---|
-    | 401 | `invalid_token` | Check the token, or create a new one |
-    | 403 | `insufficient_scope` | The token can't use this endpoint |
-    | 404 | `not_found` | Check the path. The API only has `GET` endpoints |
-    | 429 | `rate_limited` | Wait for `Retry-After` seconds |
-    | 500 | `internal_error` | Retry with backoff |
-
-    Rely on `code`, not `message`. New codes may be added; handle unknown ones by HTTP status.
-
-    # Versioning
-
-    - Within `/v1`, changes are **additive only**: new fields and new endpoints. Ignore fields
-      you don't recognise.
-    - A breaking change means `/v2`, with at least 90 days during which both work.
-    - Deprecations are announced in the changelog below and with `Deprecation` and `Sunset`
-      response headers.
-
-    # Permitted use
-
-    You may use the API for personal, non-commercial integrations with your own account.
-
-    You may not:
-
-    - build an app or website that replaces or replicates AlgoPattern
-    - share your token or use someone else's
-    - work around the rate limit
-    - use the app's internal endpoints instead of this API
-
-    The [Terms of Service](https://algopattern.app/terms) apply.
-
-    # Changelog
-
-    | Date | Change |
-    |---|---|
-    | 2026-10 | `v1` beta: `GET /v1/me`, `GET /v1/me/stats` |
-
-    # Support
-
-    - Bugs in the API or these docs, and feature requests:
-      [GitHub issues](https://github.com/algopattern-app/api-gateway/issues). Issues are public;
-      never paste a token.
-    - Anything about your account: [algopattern.dev@gmail.com](mailto:algopattern.dev@gmail.com).
+    Each endpoint lists only its own responses. Every endpoint can also return `401`
+    (invalid token), `429` (rate limited) and `500`, described under
+    [Errors](https://api.algopattern.app/#errors).
   termsOfService: https://algopattern.app/terms
   contact:
     email: algopattern.dev@gmail.com
@@ -123,137 +19,178 @@ security:
 tags:
   - name: Account
     description: The account and token behind a request.
-  - name: Stats
-    description: Your progress.
+  - name: Streak
+    description: Whether your streak is alive, and today's progress.
+  - name: XP
+    description: Your XP and leaderboard ranks.
+  - name: Activity
+    description: Your day-by-day history.
 paths:
   /me:
     get:
       tags: [Account]
-      operationId: getMe
-      summary: The account and token making the request
-      description: Cheap call for validating a token, e.g. in an integration's setup flow.
-      responses:
-        '200':
-          description: OK
-          headers:
-            X-RateLimit-Limit: { $ref: '#/components/headers/X-RateLimit-Limit' }
-            X-RateLimit-Remaining: { $ref: '#/components/headers/X-RateLimit-Remaining' }
-            X-RateLimit-Reset: { $ref: '#/components/headers/X-RateLimit-Reset' }
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/Me' }
-              example:
-                user_id: 0fd87d81-6878-4096-b24e-f11e4a838c87
-                username: ada
-                token:
-                  name: Home Assistant
-                  prefix: ap_pat_0XXgG
-                  scopes: ['stats:read']
-                  created_at: '2026-10-31T03:51:46Z'
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError' }
-  /me/stats:
-    get:
-      tags: [Stats]
-      operationId: getMyStats
-      summary: Streak, XP and activity for the token's account
+      operationId: getAccount
+      summary: Get account
       description: |
-        Computed live. Day boundaries ("today", streak days) use the account's timezone,
-        reported in `timezone`. The weekly XP window is Monday 00:00 UTC for everyone.
+        The account and token making the request. Cheap: use it to check a token, for example
+        in an integration's setup flow.
       responses:
         '200':
           description: OK
-          headers:
-            X-RateLimit-Limit: { $ref: '#/components/headers/X-RateLimit-Limit' }
-            X-RateLimit-Remaining: { $ref: '#/components/headers/X-RateLimit-Remaining' }
-            X-RateLimit-Reset: { $ref: '#/components/headers/X-RateLimit-Reset' }
-            Cache-Control:
-              schema: { type: string, example: 'private, max-age=60' }
-            Vary:
-              description: Responses are cached per token.
-              schema: { type: string, example: Authorization }
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Stats' }
+              schema: { $ref: '#/components/schemas/AccountResponse' }
               example:
+                account:
+                  user_id: 0fd87d81-6878-4096-b24e-f11e4a838c87
+                  username: ada
+                  token:
+                    name: Home Assistant
+                    prefix: ap_pat_0XXgG
+                    created_at: '2026-10-31T03:51:46Z'
                 as_of: '2026-10-30T19:05:12Z'
-                timezone: Europe/Paris
-                today: '2026-10-30'
+  /me/streak:
+    get:
+      tags: [Streak]
+      operationId: getStreak
+      summary: Get streak
+      description: |
+        Your streak and today's progress.
+
+        Days are the account's local days, in the timezone reported in `timezone`. A day you
+        missed is bridged by a streak freeze, if you have one, when the next request after it is
+        made, here or in the app.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StreakResponse' }
+              example:
                 streak:
+                  timezone: Europe/Paris
+                  today: '2026-10-30'
                   current: 42
                   daily_quiz_completed_today: true
                   active_today: true
                   freezes_available: 1
-                  recent_days:
-                    - { date: '2026-10-23', status: active }
-                    - { date: '2026-10-24', status: active }
-                    - { date: '2026-10-25', status: frozen }
-                    - { date: '2026-10-26', status: active }
-                    - { date: '2026-10-27', status: active }
-                    - { date: '2026-10-28', status: active }
-                    - { date: '2026-10-29', status: active }
-                    - { date: '2026-10-30', status: active }
+                as_of: '2026-10-30T19:05:12Z'
+  /me/xp:
+    get:
+      tags: [XP]
+      operationId: getXp
+      summary: Get XP
+      description: |
+        Your XP and leaderboard ranks.
+
+        The weekly figures use the leaderboard's week, which starts Monday 00:00 UTC for everyone,
+        wherever you are.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/XpResponse' }
+              example:
                 xp:
-                  total: 2650
+                  total_xp: 2650
                   this_week: 125
                   week_start: '2026-10-26'
                   weekly_rank: 3
                   all_time_rank: 4
+                as_of: '2026-10-30T19:05:12Z'
+  /me/activity:
+    get:
+      tags: [Activity]
+      operationId: getActivity
+      summary: Get activity
+      description: |
+        Your activity, day by day.
+
+        One entry for every day in the range, oldest first, including days with no activity.
+        Days are the account's local days.
+
+        With no parameters you get the last 30 days. A range can cover up to 366 days; for more,
+        make several requests.
+
+        Past days don't change, so fetch them once and keep them.
+      parameters:
+        - name: from
+          in: query
+          description: First day of the range. Defaults to 29 days before `to`.
+          schema: { type: string, format: date, example: '2026-01-01' }
+        - name: to
+          in: query
+          description: >
+            Last day of the range. Defaults to today. A date after today is treated as today;
+            the response's `to` says which day was used.
+          schema: { type: string, format: date, example: '2026-10-30' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ActivityResponse' }
+              example:
                 activity:
-                  days_active: 96
-                  last_active_date: '2026-10-30'
-        '401': { $ref: '#/components/responses/Unauthorized' }
-        '403': { $ref: '#/components/responses/Forbidden' }
-        '429': { $ref: '#/components/responses/RateLimited' }
-        '500': { $ref: '#/components/responses/InternalError' }
+                  timezone: Europe/Paris
+                  from: '2026-10-26'
+                  to: '2026-10-30'
+                  days:
+                    - { date: '2026-10-26', status: active, xp_earned: 25 }
+                    - { date: '2026-10-27', status: active, xp_earned: 30 }
+                    - { date: '2026-10-28', status: none, xp_earned: 0 }
+                    - { date: '2026-10-29', status: frozen, xp_earned: 0 }
+                    - { date: '2026-10-30', status: active, xp_earned: 50 }
+                  range:
+                    days_active: 3
+                    xp_earned: 105
+                  lifetime:
+                    days_active: 96
+                    first_active_date: '2026-06-30'
+                    last_active_date: '2026-10-30'
+                as_of: '2026-10-30T19:05:12Z'
+        '400': { $ref: '#/components/responses/InvalidRequest' }
 components:
   securitySchemes:
     personalAccessToken:
       type: http
       scheme: bearer
       bearerFormat: 'ap_pat_<43 base64url chars>'
-      description: Personal access token created in the app. Scope required for all v1 endpoints is `stats:read`.
-  headers:
-    X-RateLimit-Limit:
-      description: Requests allowed per window (per token).
-      schema: { type: integer, example: 60 }
-    X-RateLimit-Remaining:
-      description: Requests left in the current window.
-      schema: { type: integer, example: 59 }
-    X-RateLimit-Reset:
-      description: Unix time (seconds) when the current window resets.
-      schema: { type: integer, example: 1793404800 }
+      description: Personal access token created in the app.
   responses:
-    Unauthorized:
-      description: Missing, malformed, unknown or revoked token.
+    InvalidRequest:
+      description: A query parameter is malformed, or the range is invalid.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
-          example: { error: { code: invalid_token, message: 'The token is missing, invalid or revoked.' } }
-    Forbidden:
-      description: The token lacks the scope this endpoint needs.
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
-          example: { error: { code: insufficient_scope, message: 'This endpoint requires the stats:read scope.' } }
-    RateLimited:
-      description: Too many requests for this token.
-      headers:
-        Retry-After:
-          schema: { type: integer, example: 30 }
-        X-RateLimit-Reset: { $ref: '#/components/headers/X-RateLimit-Reset' }
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
-          example: { error: { code: rate_limited, message: Too many requests. Retry after the window resets. } }
-    InternalError:
-      description: Unexpected server error. Safe to retry with backoff.
-      content:
-        application/json:
-          schema: { $ref: '#/components/schemas/Error' }
+          example: { error: { code: invalid_request, message: 'The range can cover at most 366 days.' } }
   schemas:
-    Me:
+    AccountResponse:
+      type: object
+      required: [account, as_of]
+      properties:
+        account: { $ref: '#/components/schemas/Account' }
+        as_of: { $ref: '#/components/schemas/AsOf' }
+    StreakResponse:
+      type: object
+      required: [streak, as_of]
+      properties:
+        streak: { $ref: '#/components/schemas/Streak' }
+        as_of: { $ref: '#/components/schemas/AsOf' }
+    XpResponse:
+      type: object
+      required: [xp, as_of]
+      properties:
+        xp: { $ref: '#/components/schemas/Xp' }
+        as_of: { $ref: '#/components/schemas/AsOf' }
+    ActivityResponse:
+      type: object
+      required: [activity, as_of]
+      properties:
+        activity: { $ref: '#/components/schemas/Activity' }
+        as_of: { $ref: '#/components/schemas/AsOf' }
+    Account:
       type: object
       required: [user_id, username, token]
       properties:
@@ -265,85 +202,122 @@ components:
           type: string
           nullable: true
           description: Public handle, or null if the user hasn't chosen one yet.
-          example: lfavole
+          example: ada
         token:
           $ref: '#/components/schemas/TokenInfo'
     TokenInfo:
       type: object
-      required: [name, prefix, scopes, created_at]
+      required: [name, prefix, created_at]
       properties:
         name: { type: string, example: Home Assistant }
         prefix: { type: string, description: 'First characters of the token, for recognising it.', example: ap_pat_Xy3k }
-        scopes:
-          type: array
-          items: { type: string, enum: ['stats:read'] }
         created_at: { type: string, format: date-time }
-    Stats:
-      type: object
-      required: [as_of, timezone, today, streak, xp, activity]
-      properties:
-        as_of: { type: string, format: date-time, description: When these numbers were computed. }
-        timezone: { type: string, description: IANA timezone used for the account's days., example: Europe/Paris }
-        today: { type: string, format: date, description: The account's current local date., example: '2026-10-30' }
-        streak: { $ref: '#/components/schemas/Streak' }
-        xp: { $ref: '#/components/schemas/Xp' }
-        activity: { $ref: '#/components/schemas/Activity' }
     Streak:
       type: object
-      required: [current, daily_quiz_completed_today, active_today, freezes_available, recent_days]
+      required: [timezone, today, current, daily_quiz_completed_today, active_today, freezes_available]
       properties:
+        timezone: { $ref: '#/components/schemas/Timezone' }
+        today: { type: string, format: date, description: The account's current local date., example: '2026-10-30' }
         current:
           type: integer
           minimum: 0
           description: >
-            Consecutive days with activity ending today or yesterday. Freeze days keep the run
-            alive but don't add to the count. Still counts if today isn't done yet.
-          example: 103
+            Days in the current streak: the run of consecutive days with activity that ends today
+            or yesterday. Freeze days keep the run going but don't add to the count. The streak
+            is still alive if today isn't done yet.
+          example: 42
         daily_quiz_completed_today:
           type: boolean
           description: Whether today's daily quiz is done.
         active_today:
           type: boolean
-          description: Whether any session (daily quiz, practice or lesson) was completed today. This is what extends the streak.
-        freezes_available: { type: integer, minimum: 0, example: 2 }
-        recent_days:
-          type: array
-          description: The last 8 local days, oldest first, ending with today.
-          minItems: 8
-          maxItems: 8
-          items: { $ref: '#/components/schemas/DayStatus' }
-    DayStatus:
-      type: object
-      required: [date, status]
-      properties:
-        date: { type: string, format: date }
-        status:
-          type: string
-          enum: [active, frozen, none]
-          description: '`frozen` = bridged by a streak freeze. Treat unknown values as `none`.'
+          description: >
+            Whether any session (daily quiz, practice or lesson) was completed today. This is
+            what extends the streak.
+        freezes_available:
+          type: integer
+          minimum: 0
+          description: Streak freezes in reserve. Each one bridges one missed day.
+          example: 1
+    DayStatusValue:
+      type: string
+      enum: [active, frozen, none]
+      description: >
+        `active`: at least one session was completed. `frozen`: a missed day bridged by a streak
+        freeze. `none`: neither. Treat values you don't recognise as `none`.
     Xp:
       type: object
-      required: [total, this_week, week_start, weekly_rank, all_time_rank]
+      required: [total_xp, this_week, week_start, weekly_rank, all_time_rank]
       properties:
-        total: { type: integer, minimum: 0, example: 2652 }
-        this_week: { type: integer, minimum: 0, description: XP earned since week_start (Monday 00:00 UTC). }
-        week_start: { type: string, format: date, example: '2026-10-26' }
+        total_xp: { type: integer, minimum: 0, description: Lifetime XP., example: 2650 }
+        this_week:
+          type: integer
+          minimum: 0
+          description: XP earned since `week_start`, as counted on the weekly leaderboard.
+          example: 125
+        week_start:
+          type: string
+          format: date
+          description: The Monday (UTC) the leaderboard's current week began.
+          example: '2026-10-26'
         weekly_rank:
           type: integer
           nullable: true
           minimum: 1
-          description: Rank on this week's leaderboard; null if no XP this week or no username chosen.
+          description: Rank on this week's leaderboard. Null until you have a username and XP this week.
         all_time_rank:
           type: integer
           nullable: true
           minimum: 1
-          description: Rank on the all-time leaderboard; null if no username chosen or no XP yet.
+          description: Rank on the all-time leaderboard. Null until you have a username and some XP.
     Activity:
       type: object
-      required: [days_active, last_active_date]
+      required: [timezone, from, to, days, range, lifetime]
       properties:
-        days_active: { type: integer, minimum: 0, description: Total days with activity (freeze days excluded). }
-        last_active_date: { type: string, format: date, nullable: true }
+        timezone: { $ref: '#/components/schemas/Timezone' }
+        from: { type: string, format: date, description: First day returned. }
+        to: { type: string, format: date, description: Last day returned. Never after the account's today. }
+        days:
+          type: array
+          description: Every day from `from` to `to`, oldest first.
+          maxItems: 366
+          items: { $ref: '#/components/schemas/ActivityDay' }
+        range:
+          type: object
+          description: Totals for the days returned.
+          required: [days_active, xp_earned]
+          properties:
+            days_active: { type: integer, minimum: 0, description: Days in the range with status `active`. }
+            xp_earned: { type: integer, minimum: 0, description: XP earned in the range. }
+        lifetime:
+          type: object
+          description: Totals across the whole account, whatever the range.
+          required: [days_active, first_active_date, last_active_date]
+          properties:
+            days_active: { type: integer, minimum: 0, description: All days with activity. Freeze days don't count. }
+            first_active_date: { type: string, format: date, nullable: true }
+            last_active_date: { type: string, format: date, nullable: true }
+    ActivityDay:
+      type: object
+      required: [date, status, xp_earned]
+      properties:
+        date: { type: string, format: date }
+        status: { $ref: '#/components/schemas/DayStatusValue' }
+        xp_earned:
+          type: integer
+          minimum: 0
+          description: >
+            XP earned on this local day. Weekly totals in `/v1/me/xp` split weeks at Monday UTC,
+            so near midnight a day's XP can land in a different week there.
+    AsOf:
+      type: string
+      format: date-time
+      description: When the response was computed.
+      example: '2026-10-30T19:05:12Z'
+    Timezone:
+      type: string
+      description: IANA timezone the account's days are counted in. It follows the device the app last ran on.
+      example: Europe/Paris
     Error:
       type: object
       required: [error]
@@ -354,6 +328,6 @@ components:
           properties:
             code:
               type: string
-              enum: [invalid_token, insufficient_scope, rate_limited, not_found, internal_error]
-              description: Stable, machine-readable. New codes may be added; treat unknown codes by HTTP status.
+              enum: [invalid_request, invalid_token, rate_limited, not_found, internal_error]
+              description: Stable, machine-readable. New codes may be added; handle unknown codes by HTTP status.
             message: { type: string, description: Human-readable; may change. }
