@@ -7,6 +7,8 @@ proxy to the API itself. It's a static site on Vercel with no build step.
 |---|---|
 | `/` | The guide: [`public/index.html`](public/index.html), styled by `site.css`, with `docs.js` for the sidebar |
 | `/v1` | The endpoint reference: [`public/v1.html`](public/v1.html), rendered by [Scalar](https://github.com/scalar/scalar) from the spec, configured in `reference.js` |
+| `/sitemap.xml` | Public documentation sitemap: `/` and `/v1` only |
+| `/robots.txt` | Advertises the documentation sitemap to crawlers |
 | `/openapi.yaml` | The spec: [`public/openapi.yaml`](public/openapi.yaml) |
 | everything else | Proxied to the API's Supabase edge function (see [`vercel.json`](vercel.json)) |
 
@@ -28,6 +30,13 @@ Content-Security-Policy. Edits show on reload. API paths such as `/v1/me` answer
 404 locally, since in production Vercel proxies them to the API.
 
 Once the repo is connected to Vercel, every pull request also gets a preview deployment.
+
+## Sitemap
+
+`public/sitemap.xml` lists only the public guide and endpoint reference, not authenticated
+API endpoints. Update its `lastmod` timestamps when the corresponding documentation changes
+(including `openapi.yaml` or `reference.js` for `/v1`). Use the date of the content change,
+not the deployment date. Add or remove entries when public documentation routes change.
 
 ## Changing the spec
 
